@@ -351,7 +351,8 @@ where
     C: quic::Connection<B>,
     B: Buf,
 {
-    inner: ConnectionInner<C, B>,
+    /// Inner HTTP/3 connection
+    pub inner: ConnectionInner<C, B>,
     // Has a GOAWAY frame been sent? If so, this PushId is the last we are willing to accept.
     sent_closing: Option<PushId>,
     // Has a GOAWAY frame been received? If so, this is StreamId the last the remote will accept.
@@ -510,6 +511,33 @@ impl Builder {
         self
     }
 
+
+    /// Enable WebTransport with one max one session.
+    /// Increase session amount via [``]
+    pub fn enable_webtransport(&mut self, value: bool) -> &mut Self {
+        self.config.settings.enable_webtransport = value;
+        self.config.settings.max_webtransport_sessions = 1;
+        self
+    }
+
+    /// Announce the maximum allowed WebTransport session to the server.
+    pub fn max_webtransport_sessions(&mut self, value: u64) -> &mut Self {
+        self.config.settings.max_webtransport_sessions = value;
+        self
+    }
+
+    /// Configure HTTP Datagrams support
+    pub fn enable_datagram(&mut self, value: bool) -> &mut Self {
+        self.config.settings.enable_datagram = value;
+        self
+    }
+
+    /// Configure HTTP extended connect
+    pub fn enable_extended_connect(&mut self, value: bool) -> &mut Self {
+        self.config.settings.enable_extended_connect = value;
+        self
+    }
+
     /// Just like in HTTP/2, HTTP/3 also uses the concept of "grease"
     /// to prevent potential interoperability issues in the future.
     /// In HTTP/3, the concept of grease is used to ensure that the protocol can evolve
@@ -529,6 +557,9 @@ impl Builder {
         O: quic::OpenStreams<B>,
         B: Buf,
     {
+        if self.config.settings.enable_webtransport && self.config.settings.max_webtransport_sessions == 0 {
+            return Err(Code::with_reason(Code::H3_SETTINGS_ERROR, "WebTransport enabled but max sessions is not set to 1 or more", ErrorLevel::ConnectionError))
+        }
         let open = quic.opener();
         let conn_state = SharedStateRef::default();
 

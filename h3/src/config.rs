@@ -1,3 +1,5 @@
+//! Settings of the HTTP/3 protocol
+
 use std::convert::TryFrom;
 
 use crate::proto::{frame, varint::VarInt};
