@@ -11,6 +11,7 @@ use bytes::{Buf, Bytes, BytesMut};
 use futures_util::future;
 use http::{request, HeaderMap, Response};
 use tracing::{info, trace};
+use quic::RecvStream;
 
 use crate::{
     config::Config,
@@ -727,6 +728,11 @@ where
             }
         }
         res
+    }
+
+    /// Returns the underlying stream id
+    pub fn send_id(&self) -> StreamId {
+        self.inner.stream.stream.recv_id()
     }
 
     /// Tell the peer to stop sending into the underlying QUIC stream
